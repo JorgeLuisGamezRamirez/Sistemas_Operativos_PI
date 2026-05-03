@@ -1,42 +1,25 @@
 class GestorRecursos:
-    """
-    Administra los recursos del sistema (CPU y Memoria RAM).
-    Permite la asignación y liberación dinámica para los procesos, simulando
-    la detección de conflictos cuando no hay recursos suficientes.
-    """
-    
-    def __init__(self, total_cpus: int, total_ram_mb: int):
+    def __init__(self, total_cpus=4, total_ram_mb=16384):
         self.total_cpus = total_cpus
-        self.total_ram_mb = total_ram_mb
-        
-        # Contadores de recursos actualmente disponibles
         self.cpus_disponibles = total_cpus
+        self.total_ram_mb = total_ram_mb
         self.ram_disponible_mb = total_ram_mb
 
-    def solicitar_recursos(self, pcb) -> bool:
-        """
-        Verifica si hay recursos suficientes para el proceso.
-        Si hay, los asigna y retorna True. Si hay conflicto, retorna False.
-        """
-        if self.cpus_disponibles >= pcb.cpu_asignada and self.ram_disponible_mb >= pcb.memoria_requerida:
-            self.cpus_disponibles -= pcb.cpu_asignada
+    def ajustar_cpus(self, nuevo_total):
+        # Calculamos la diferencia para no perder la cuenta de CPUs ocupados
+        usados = self.total_cpus - self.cpus_disponibles
+        self.total_cpus = nuevo_total
+        self.cpus_disponibles = nuevo_total - usados
+
+    def solicitar_recursos(self, pcb):
+        if self.ram_disponible_mb >= pcb.memoria_requerida and self.cpus_disponibles > 0:
             self.ram_disponible_mb -= pcb.memoria_requerida
-            print(f"✅ [Recursos] Asignados a {pcb.nombre}. Disponibles: {self.cpus_disponibles} CPUs, {self.ram_disponible_mb}MB RAM.")
+            self.cpus_disponibles -= 1
             return True
-        else:
-            # Detección de conflicto: No hay suficientes recursos
-            print(f"❌ [Recursos] Conflicto: Recursos insuficientes para {pcb.nombre}.")
-            return False
+        return False
 
     def liberar_recursos(self, pcb):
-        """
-        Devuelve los recursos al pool general cuando el proceso termina o se suspende.
-        """
-        self.cpus_disponibles += pcb.cpu_asignada
         self.ram_disponible_mb += pcb.memoria_requerida
-        
-        # Medida de seguridad para no exceder el total original por algún error de cálculo
-        self.cpus_disponibles = min(self.cpus_disponibles, self.total_cpus)
-        self.ram_disponible_mb = min(self.ram_disponible_mb, self.total_ram_mb)
-        
-        print(f"♻️ [Recursos] Liberados por {pcb.nombre}. Disponibles: {self.cpus_disponibles} CPUs, {self.ram_disponible_mb}MB RAM.")
+        self.cpus_disponibles += 1
+        if self.cpus_disponibles > self.total_cpus:
+            self.cpus_disponibles = self.total_cpus

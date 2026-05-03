@@ -2,30 +2,25 @@ import sys
 import os
 import tkinter as tk
 
-# --- ESTO SOLUCIONA EL ERROR DE MÓDULOS ---
-# Le dice a Python que mire una carpeta hacia atrás para encontrar IPC, Recursos, etc.
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# --- SOLUCIÓN DE RUTAS ---
+directorio_actual = os.path.dirname(os.path.abspath(__file__))
+if directorio_actual not in sys.path:
+    sys.path.insert(0, directorio_actual)
 
-# Ahora sí, las importaciones funcionarán sin problemas
 from Recursos.gestor_recursos import GestorRecursos
 from Algoritmos.fcfs import FCFS
 from Algoritmos.planificador import Planificador
 from Interfaz.gui import SimuladorGUI
 
 def main():
-    print("Iniciando Simulador de Gestor de Procesos...")
+    print("Iniciando Simulador Multiprocesador - UAT")
+    recursos_sistema = GestorRecursos()
     
-    # Inicializar hardware simulado
-    recursos_sistema = GestorRecursos(total_cpus=2, total_ram_mb=4096)
-    
-    # Inicializar planificador
     algoritmo_inicial = FCFS()
     planificador_sistema = Planificador(algoritmo=algoritmo_inicial)
     
-    # Levantar la ventana
     root = tk.Tk()
     app = SimuladorGUI(root, planificador_sistema, recursos_sistema)
-    
     root.mainloop()
 
 if __name__ == "__main__":
